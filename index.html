@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sistema de Gestión de Cochera – Registro de ingresos y salidas de vehículos con cálculo de tarifas." />
+  <title>Gestión de Cochera</title>
+
+  <!-- jQuery CDN (única librería externa permitida) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- Hoja de estilos principal -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===== CABECERA ===== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <span class="logo-icon">🅿️</span>
+        <div>
+          <h1 class="site-title">GestoCochera</h1>
+          <p class="site-subtitle">Sistema de Gestión de Estacionamiento</p>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-badge" id="stat-dentro">
+          <span class="stat-number" id="count-dentro">0</span>
+          <span class="stat-label">Dentro</span>
+        </div>
+        <div class="stat-badge stat-badge--salida" id="stat-salida">
+          <span class="stat-number" id="count-salida">0</span>
+          <span class="stat-label">Salidos</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== CONTENIDO PRINCIPAL ===== -->
+  <main class="main-content">
+
+    <!-- === PANEL IZQUIERDO: FORMULARIO DE INGRESO === -->
+    <section class="panel panel--form" aria-labelledby="form-title">
+      <div class="panel-header">
+        <h2 class="panel-title" id="form-title">
+          <span class="panel-icon">➕</span> Registrar Ingreso
+        </h2>
+      </div>
+
+      <form id="form-ingreso" class="form-ingreso" novalidate>
+
+        <!-- Campo: Placa -->
+        <div class="form-group">
+          <label class="form-label" for="input-placa">Placa del Vehículo</label>
+          <input
+            type="text"
+            id="input-placa"
+            class="form-input"
+            placeholder="Ej: ABC-123"
+            maxlength="8"
+            autocomplete="off"
+          />
+          <span class="form-hint">Formato: 3 letras – 3 números</span>
+          <span class="form-error" id="error-placa"></span>
+        </div>
+
+        <!-- Campo: Tipo de vehículo -->
+        <div class="form-group">
+          <label class="form-label">Tipo de Vehículo</label>
+          <div class="tipo-selector">
+
+            <label class="tipo-option" for="tipo-auto">
+              <input type="radio" id="tipo-auto" name="tipo" value="auto" checked />
+              <span class="tipo-card">
+                <span class="tipo-emoji">🚗</span>
+                <span class="tipo-nombre">Auto</span>
+                <span class="tipo-tarifa">S/ 5 / hora</span>
+              </span>
+            </label>
+
+            <label class="tipo-option" for="tipo-moto">
+              <input type="radio" id="tipo-moto" name="tipo" value="moto" />
+              <span class="tipo-card">
+                <span class="tipo-emoji">🏍️</span>
+                <span class="tipo-nombre">Moto</span>
+                <span class="tipo-tarifa">S/ 3 / hora</span>
+              </span>
+            </label>
+
+            <label class="tipo-option" for="tipo-camioneta">
+              <input type="radio" id="tipo-camioneta" name="tipo" value="camioneta" />
+              <span class="tipo-card">
+                <span class="tipo-emoji">🚐</span>
+                <span class="tipo-nombre">Camioneta</span>
+                <span class="tipo-tarifa">S/ 7 / hora</span>
+              </span>
+            </label>
+
+          </div>
+          <span class="form-error" id="error-tipo"></span>
+        </div>
+
+        <!-- Botón de envío -->
+        <button type="submit" class="btn btn--primary btn--full" id="btn-registrar">
+          <span>🚀</span> Registrar Ingreso
+        </button>
+
+      </form>
+
+      <!-- Tarifas informativas -->
+      <div class="tarifas-info">
+        <h3 class="tarifas-title">📋 Tarifas Vigentes</h3>
+        <ul class="tarifas-lista">
+          <li><span class="tarifa-tipo">🚗 Auto</span><span class="tarifa-precio">S/ 5.00 / hora</span></li>
+          <li><span class="tarifa-tipo">🏍️ Moto</span><span class="tarifa-precio">S/ 3.00 / hora</span></li>
+          <li><span class="tarifa-tipo">🚐 Camioneta</span><span class="tarifa-precio">S/ 7.00 / hora</span></li>
+        </ul>
+        <p class="tarifas-nota">* Mínimo cobro: 1 hora</p>
+      </div>
+    </section>
+
+    <!-- === PANEL DERECHO: TABLA DE VEHÍCULOS === -->
+    <section class="panel panel--table" aria-labelledby="table-title">
+      <div class="panel-header">
+        <h2 class="panel-title" id="table-title">
+          <span class="panel-icon">📋</span> Vehículos en Cochera
+        </h2>
+        <div class="table-actions">
+          <input
+            type="search"
+            id="buscador"
+            class="form-input form-input--search"
+            placeholder="Buscar placa..."
+            autocomplete="off"
+          />
+          <button class="btn btn--ghost" id="btn-limpiar-historial" title="Limpiar historial de salidas">
+            🗑️ Limpiar Historial
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros de estado -->
+      <div class="filtros">
+        <button class="filtro-btn filtro-btn--active" data-filtro="todos">Todos</button>
+        <button class="filtro-btn" data-filtro="dentro">🟢 Dentro</button>
+        <button class="filtro-btn" data-filtro="salida">🔴 Salidos</button>
+      </div>
+
+      <!-- Tabla de vehículos -->
+      <div class="table-wrapper">
+        <table class="tabla-vehiculos" id="tabla-vehiculos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Placa</th>
+              <th>Tipo</th>
+              <th>Hora Ingreso</th>
+              <th>Estado</th>
+              <th>Total Pagado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body">
+            <!-- Filas generadas por JS -->
+          </tbody>
+        </table>
+
+        <!-- Estado vacío -->
+        <div class="estado-vacio" id="estado-vacio">
+          <span class="estado-vacio-icon">🅿️</span>
+          <p class="estado-vacio-titulo">Cochera vacía</p>
+          <p class="estado-vacio-desc">Registra el ingreso de un vehículo para comenzar.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== MODAL: COMPROBANTE DE SALIDA ===== -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">🧾 Comprobante de Salida</h3>
+        <button class="modal-close" id="modal-close" aria-label="Cerrar modal">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Contenido generado por JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--primary btn--full" id="modal-confirmar">✅ Confirmar Salida</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST / NOTIFICACIONES ===== -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- Módulo principal de la aplicación -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
